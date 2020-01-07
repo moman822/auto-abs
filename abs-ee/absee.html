@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+	
+	<head>
+		<meta charset="utf-8">
+		<title>ABS-EE Filings</title>
+        <script src="https://d3js.org/d3.v4.min.js"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+		
+		<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+		<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.js"></script>
+		
+		<style>
+			body {background-color: white;}
+			p { 
+				font-family: sans-serif;
+				line-height: 22px;
+			}
+			table { font-family: sans-serif;}
+		</style>
+		
+	</head>
+
+	<body>
+		<h2>ABS-EE Filings</h2>
+		<div>
+			<p style="width:50%">
+				This page provides links to ABS-EE filings pulled from the U.S. Securities and Exchange Commision's online filing service, EDGAR. ABS-EE filings consist of 
+				loan-level data points for the assets that underly asset backed securities. This data is published monthly by the issuing entity of an asset backed security. 
+				On EDGAR, ABS-EE data can be found for auto ABS and commerical real estate 	ABS deals. The data is published in XML format. File-sizes can be quite large in the case of
+				certain auto ABS deals, which may have upwards of 50,000 individual loans on which to report updates.
+				<br><br>
+				This page is updated in an automated ETL pipeline run on a remote AWS server. The pipeline uses Github as an updateable database by way of daily commits from the remote server.
+				The script which locates new data is written in R, and takes advantage of EDGAR's RSS feed to locate filings of the "ABS-EE" type. These scripts and the data files can be found 
+				<a href="https://github.com/moman822/moman822.github.io/tree/master/abs-ee" target="_blank">here</a>.
+				<br><br>
+				Updates to this project will include normalized data collection of monthly servicer reports, showing asset performance, and other projects using R-Shiny to analyze the loan-level data
+				itself.
+				<br><br>
+				
+				
+			</p>
+			
+		</div>		
+		
+		<div id='top'></div>
+		<div id="tableDiv"><table id="theTable"></table></div>
+		
+		<script>
+		
+			var dat
+			var companies = []
+			var company
+			var sources = []
+			
+			d3.csv('data/sources.csv', function(data2){
+				sources = data2
+			})
+			
+			d3.csv("data/companies.csv", function(data){
+				dat = data
+				
+				
+				for(i=0; i<dat.length; i++){
+					companies[i] = dat[i].Company
+				}				
+				companies.unshift("")
+				d3.select('#top')
+					.append('select')
+					.attr('id', 'company_dropdown')
+					.attr('class','select')
+					//.on('change', onchange)
+					.selectAll('option')
+						.data(companies)
+						.enter()
+						.append('option')
+							.text(function (d) {
+								return d
+							})
+					
+				d3.select("#company_dropdown")
+					.on('change', function(){
+						d3.select("#source_dropdown").remove()
+					
+						sources2 = sources.filter(function(d){ return d.company == d3.select('#company_dropdown').node().value })
+						
+						//d3.select('#top')
+						//	.append('select')
+						//	.attr('id', 'source_dropdown')
+						//	.attr('class','select')
+						//	//.on('change', onchange)
+						//	.selectAll('option')
+						//		.data(sources2)
+						//		.enter()
+						//		.append('option')
+						//			.text(function (d) {
+						//				return d.date
+						//			})
+						//$('#theTable').destroy()
+						
+						$('#theTable').DataTable( {
+						//$('#tableDiv').append('table').attr('id', 'theTable').DataTable( {
+								destroy: true,
+								data: sources2,
+								columns: [
+									{ data: 'company', title: 'Company' },
+									{ data: 'cik', title: 'CIK' },
+									{ data: 'date', title: 'Date' },
+									{ data: 'absee_page', title: 'Page', 
+											"render": function(data, type, row, meta){
+														if(type === 'display'){
+															data = '<a target="_blank" href="  ' + data + '">' + 'Page link' + '</a>';
+														}
+														return data;
+													}
+									},
+									{ data: 'absee_link', title: 'Data link', 
+											"render": function(data, type, row, meta){
+														if(type === 'display'){
+															data = '<a href="' + data + '">' + 'XML link' + '</a>';
+														}
+														return data;
+													}
+									}
+								]
+						});
+						
+					})
+				
+				
+			
+				
+			
+			})
+			
+			
+
+			
+			
+			
+			
+			
+			
+		
+		</script>
+	</body>
+
+
+</html>
