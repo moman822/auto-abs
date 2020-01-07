@@ -10,4 +10,4 @@ git add .
 
 git commit -m "updating companies and log"
 
-git push origin master
+git push origin gh-pages
