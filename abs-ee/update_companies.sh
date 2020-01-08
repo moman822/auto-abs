@@ -3,6 +3,7 @@
 
 cd /home/ubuntu/auto-abs/abs-ee
 
+git pull
 
 Rscript add_companies.R
 
