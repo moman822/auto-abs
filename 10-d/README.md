@@ -10,9 +10,8 @@ Extracting data from these is a challenge of identifing where in the document da
 
 Deals issued by the same issuer use the same HTML templates, so a program to extract data from Ally Auto Receivables Trust 2017-1 and Ally Auto Receivables Trust 2018-1 reports can be replicated, as well as across new months for the same deal.
 
-This repository contains R programs to extract data from these monthly reports as well as the extracted data in the [data folder](/data) for a number of deals.
-
+This repository contains R programs to extract data from these monthly reports as well as the extracted data in the [data folder](/10-d/data) for a number of deals.
 
 #### Data updating
 
-Data is updated via a deployment pipeline on Amazon AWS. The program checks for new reports each week for specified deal issuers; extracts data from those reports, if found, using the R scripts here; and appends new data to the files in [data](/data).
+Data is updated via a deployment pipeline on Amazon AWS. The program checks for new reports each week for specified deal issuers; extracts data from those reports, if found, using the R scripts here; and appends new data to the files in [data](/10-d/data).
