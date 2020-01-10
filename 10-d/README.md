@@ -1,4 +1,4 @@
-## Auto Asset-back Security Data Pipeline: 10-D Monthly Servicer Reports
+## Auto ABS Data Pipeline: 10-D Monthly Servicer Reports
 
 These reports are published monthly for each publicly-issued auto ABS deal. They contain data on distributions to noteholders, the status of the pool of receivables and other required disclosures regarding the security.
 
