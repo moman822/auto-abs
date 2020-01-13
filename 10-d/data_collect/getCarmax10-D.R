@@ -175,7 +175,7 @@ for(j in 1:length(ciks)){
 carmax10d <- unique(rbindlist(all))
 
 carmax10d[, .N, by=.(company, period)]
-
+setnames(carmax10d, "Class", "class")
 
 fwrite(carmax10d, "carmax10d.csv")
 

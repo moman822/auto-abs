@@ -61,6 +61,16 @@ for(j in 1:length(ciks)){
     x1 <- tbls[[1]]#download_table(page, "body > document > type > sequence > filename > description > text > div > div:nth-child(5) > div > table")
     period <- as.Date(x1[grepl("Collection Period, Begin", X2)]$X3, format = "%m/%d/%Y")
     
+    rc <- tbls[[8]][, c("X2","X7")]
+    names(rc) <- c("variable", "value")
+    rc <- rc[variable!=""]
+    rc[, variable:=paste0("Ending", gsub(" ", "", variable))]
+    rc[, Class:="all"]
+    rc[, value:=as.numeric(gsub("[[:space:]]", "", gsub(",", "", value)))]
+    rc[, link:=srv_rep[i]]
+    rc[, period:=period][, company:=comp[cik==ciks[j]]$Company]
+    
+    
     t1 <- tbls[[2]]
     names(t1) <- gsub("[[:space:]]", "", paste0(
       as.matrix(t1)[3,],
@@ -75,6 +85,11 @@ for(j in 1:length(ciks)){
     t1 <- data.table(apply(t1, 2, gsub, patt=",", replace=""))
     t1 <- t1[, lapply(.SD, as.numeric), by=.(Class)]
     t1 <- melt(t1, id.vars = c("Class"))[, period:=period][, company:=comp[cik==ciks[j]]$Company]
+    t1[, link:=srv_rep[i]]
+    
+    
+    t1 <- rbind(t1, rc)
+    
     l[[i]] <- t1
     print(i)
   }; rm(t1, tbls, x1, page,i, period)
@@ -87,8 +102,10 @@ for(j in 1:length(ciks)){
 ally10d <- rbindlist(all)
 ally10d[variable=="CUSIP/CUSIP-RegS", variable:="CUSIP"]
 ally10d <- ally10d[variable!="CUSIP"]
+setnames(ally10d, "Class", "class")
+setnames(ally10d, "company", "deal")
 
-fwrite(ally10d, "ally10d.csv")
+fwrite(ally10d, "SEC ABS\\Data collection\\10-D\\ally10d.csv")
 
 
 
