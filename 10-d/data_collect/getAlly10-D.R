@@ -51,7 +51,6 @@ comp <- fread("https://raw.githubusercontent.com/moman822/auto-abs/gh-pages/abs-
 ciks <- comp[Company!="Ally Auto Assets LLC"][grepl("Ally", Company), unique(cik)]
 all <- list()
 
-dt <- fread("C:\\Users\\TRM\\Documents\\GitHub\\auto-abs\\10-d\\data/ally10d.csv")
 dt <- fread("data/ally10d.csv")
 
 
@@ -130,14 +129,14 @@ if(length(all)==0){
   setnames(ally10d, "Class", "class")
   setnames(ally10d, "company", "deal")
   
-  old_data <- fread("../../Data collection/10-D/ally10d.csv")
+  old_data <- fread("data/ally10d.csv")
   
   final_data <- rbind(
     old_data,
     ally10d
   )
   
-  fwrite(final_data, "Data/ally10d.csv")
+  fwrite(final_data, "data/ally10d.csv")
   
   
 }
