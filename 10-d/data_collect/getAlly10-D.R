@@ -1,9 +1,14 @@
 library(rvest); library(data.table); library(feedeR)
 
-
 ###
 ### Get data from 10-D monthly servicer reports of Ally Auto asset-backed securities
 ###
+
+##Check for correct files:
+if(!file.exists("data/ally10d.csv")){ 
+  stop("The file does not exists; you are running this script from the wrong directory!")
+}
+
 
 #Functions to extract links from EDGAR
 get_10d_links <- function(cik) {
@@ -17,8 +22,10 @@ get_10d_links <- function(cik) {
   if(nrow(rss$items)==0){
     NA
   } else {
-    links <- data.table(rss$items)[grepl("https", link)]$link
-    links
+    list(
+      links = data.table(rss$items)[grepl("https", link)]$link,
+      dates = data.table(rss$items)[grepl("https", link)]$date
+    )
   }
 }
 
@@ -44,22 +51,37 @@ comp <- fread("https://raw.githubusercontent.com/moman822/auto-abs/gh-pages/abs-
 ciks <- comp[Company!="Ally Auto Assets LLC"][grepl("Ally", Company), unique(cik)]
 all <- list()
 
+dt <- fread("C:\\Users\\TRM\\Documents\\GitHub\\auto-abs\\10-d\\data/ally10d.csv")
+dt <- fread("data/ally10d.csv")
+
+
+
 for(j in 1:length(ciks)){
-  print(paste0("Starting: ", j))
   
-  links <- get_10d_links(cik = ciks[j])
-  if(is.na(links)){ next }
-  srv_rep <- lapply(links, get_servicer_report)
-  srv_rep <- unlist(srv_rep)
-  print(paste0("Reports to scrape: ", length(srv_rep)))
+  d10 <- get_10d_links(cik = ciks[j])
+  if(is.na(d10)){ next }
+  
+  d10 <- as.data.table(d10)
+  
+  d10$srv_rep <- unlist(lapply(d10$links, get_servicer_report))
+  #srv_rep <- unlist(srv_rep)
+  d10 <- d10[!srv_rep %in% dt$link]
+  
+  if(nrow(d10)==0){ print(paste0("All reports scraped for: ", ciks[j])); next } else { print(paste0("Some report for: ", ciks[j])); next}
+  
+  l <- list()
+  print(paste0("Reports to scrape: ", nrow(d10)))
+  
   l <- list()
   
-  for(i in 1:length(srv_rep)){
-    page <- read_html(srv_rep[i])
+  for(i in 1:nrow(d10)){
+    page <- read_html(d10$srv_rep[i])
     tbls <- html_table(page, fill = T)
     lapply(tbls, setDT)
     x1 <- tbls[[1]]#download_table(page, "body > document > type > sequence > filename > description > text > div > div:nth-child(5) > div > table")
     period <- as.Date(x1[grepl("Collection Period, Begin", X2)]$X3, format = "%m/%d/%Y")
+    pub <- d10$dates[i]
+    
     
     rc <- tbls[[8]][, c("X2","X7")]
     names(rc) <- c("variable", "value")
@@ -67,7 +89,7 @@ for(j in 1:length(ciks)){
     rc[, variable:=paste0("Ending", gsub(" ", "", variable))]
     rc[, Class:="all"]
     rc[, value:=as.numeric(gsub("[[:space:]]", "", gsub(",", "", value)))]
-    rc[, link:=srv_rep[i]]
+    rc[, link:=d10$srv_rep[i]]
     rc[, period:=period][, company:=comp[cik==ciks[j]]$Company]
     
     
@@ -85,27 +107,48 @@ for(j in 1:length(ciks)){
     t1 <- data.table(apply(t1, 2, gsub, patt=",", replace=""))
     t1 <- t1[, lapply(.SD, as.numeric), by=.(Class)]
     t1 <- melt(t1, id.vars = c("Class"))[, period:=period][, company:=comp[cik==ciks[j]]$Company]
-    t1[, link:=srv_rep[i]]
-    
-    
-    t1 <- rbind(t1, rc)
+    t1[, link:=d10$srv_rep[i]]
+    t1 <- rbind(t1, rc)[, pub_date:=pub]
     
     l[[i]] <- t1
     print(i)
-  }; rm(t1, tbls, x1, page,i, period)
+  }
   
   all[[j]] <- rbindlist(l)
   
-}; rm(links, srv_rep, l, j)
+}; rm(d10, l, j)
 
 
-ally10d <- rbindlist(all)
-ally10d[variable=="CUSIP/CUSIP-RegS", variable:="CUSIP"]
-ally10d <- ally10d[variable!="CUSIP"]
-setnames(ally10d, "Class", "class")
-setnames(ally10d, "company", "deal")
+if(length(all)==0){
+  print("There is no data scraped")
+  
+} else {
+  print("Writing data")
+  ally10d <- rbindlist(all)
+  ally10d[variable=="CUSIP/CUSIP-RegS", variable:="CUSIP"]
+  ally10d <- ally10d[variable!="CUSIP"]
+  setnames(ally10d, "Class", "class")
+  setnames(ally10d, "company", "deal")
+  
+  old_data <- fread("../../Data collection/10-D/ally10d.csv")
+  
+  final_data <- rbind(
+    old_data,
+    ally10d
+  )
+  
+  fwrite(final_data, "Data/ally10d.csv")
+  
+  
+}
 
-fwrite(ally10d, "SEC ABS\\Data collection\\10-D\\ally10d.csv")
+
+
+
+
+
+
+
 
 
 
