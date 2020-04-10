@@ -1,6 +1,10 @@
 library(rvest); library(data.table); library(feedeR)
 
 
+if(!file.exists("data/ally10d.csv")){ 
+  stop("The file does not exists; you are running this script from the wrong directory!")
+}
+
 ###
 ### Get data from 10-D monthly servicer reports of CarMax asset-backed securities
 ###

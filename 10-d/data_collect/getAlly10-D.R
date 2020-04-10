@@ -66,7 +66,12 @@ for(j in 1:length(ciks)){
   #srv_rep <- unlist(srv_rep)
   d10 <- d10[!srv_rep %in% dt$link]
   
-  if(nrow(d10)==0){ print(paste0("All reports scraped for: ", ciks[j])); next } else { print(paste0("Some report for: ", ciks[j])); next}
+  if(nrow(d10)==0){ 
+    print(paste0("All reports scraped for: ", ciks[j]))
+    next
+  } else { 
+    print(paste0("Some report for: ", ciks[j]))
+  }
   
   l <- list()
   print(paste0("Reports to scrape: ", nrow(d10)))
@@ -81,8 +86,14 @@ for(j in 1:length(ciks)){
     period <- as.Date(x1[grepl("Collection Period, Begin", X2)]$X3, format = "%m/%d/%Y")
     pub <- d10$dates[i]
     
+    if(period %in% as.Date(c("2020-01-01", "2020-02-01"))){
+      rc <- tbls[[9]][, c("X2","X7")]
+      t1 <- tbls[[3]]
+    } else {
+      rc <- tbls[[8]][, c("X2","X7")]
+      t1 <- tbls[[2]]
+    }
     
-    rc <- tbls[[8]][, c("X2","X7")]
     names(rc) <- c("variable", "value")
     rc <- rc[variable!=""]
     rc[, variable:=paste0("Ending", gsub(" ", "", variable))]
@@ -92,7 +103,6 @@ for(j in 1:length(ciks)){
     rc[, period:=period][, company:=comp[cik==ciks[j]]$Company]
     
     
-    t1 <- tbls[[2]]
     names(t1) <- gsub("[[:space:]]", "", paste0(
       as.matrix(t1)[3,],
       as.matrix(t1)[4,]
@@ -128,6 +138,9 @@ if(length(all)==0){
   ally10d <- ally10d[variable!="CUSIP"]
   setnames(ally10d, "Class", "class")
   setnames(ally10d, "company", "deal")
+  ally10d[, pub_date:=as.character(pub_date)]
+  ally10d[, period:=as.character(period)]
+  
   
   old_data <- fread("data/ally10d.csv")
   
